@@ -1,11 +1,10 @@
 [project]
-
 name = "vibtest"
 authors = [ {name = "Guilain Ernotte", email = "GErnotte@student.uliege.be"} ]
 readme = "README.md"
 description = "Vibration testing of a plane structure."
 version = "0.0.1"
-# license = "MIT"
+license = {text = "MIT"}
 dependencies = [
 	"numpy",
 	"matplotlib",
@@ -14,10 +13,8 @@ dependencies = [
 requires-python = ">= 3.8"
 
 [build-system]
-
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-
 where = ["src"]

@@ -1,7 +1,12 @@
 [project]
 name = "vibtest"
-version = "0.1.0"
-description = "Experimental modal analysis of a simplified aircraft structure"
+authors = [ {name = "Guilain Ernotte", email = "GErnotte@student.uliege.be"} ]
 readme = "README.md"
+description = "Experimental modal analysis of a simplified aircraft structure"
+version = "0.1.0"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "matplotlib>=3.10.3",
+    "numpy>=2.3.1",
+    "scipy>=1.16.0",
+]

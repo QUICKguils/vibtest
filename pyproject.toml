@@ -1,0 +1,7 @@
+[project]
+name = "vibtest"
+version = "0.1.0"
+description = "Experimental modal analysis of a simplified aircraft structure"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []

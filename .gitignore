@@ -1,3 +1,6 @@
+# Heavy recorded lab data
+src/vibtest/project/res/
+
 # Python-generated files
 __pycache__/
 *.py[oc]

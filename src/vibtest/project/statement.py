@@ -1,23 +1,23 @@
-"""labdata -- Manipulate data from the two lab sessions."""
+"""Define the general project statement data."""
 
 from scipy import io
 import matplotlib.pyplot as plt
 
-from vibtest import _ROOT_PATH
+from vibtest.project import _PROJECT_PATH
 
 LAB_DIR = [
-    _ROOT_PATH / "res" / "lab_1",
-    _ROOT_PATH / "res" / "lab_2"
+    _PROJECT_PATH / "res" / "lab_1",
+    _PROJECT_PATH / "res" / "lab_2"
 ]
 
 
 def extract_measure(id_lab, id_measure):
-    file_name = str(LAB_DIR[id_lab-1] / f"DPsv{id_measure:05}")
+    file_name = str(LAB_DIR[id_lab-1] / f"DPsv{id_measure:05}.mat")
     return io.loadmat(file_name)
 
 
 def _inspect_coherences_lab_1():
-    fig, axs = plt.subplots(4, 2, figsize=(8, 6), layout='constrained')
+    fig, axs = plt.subplots(4, 2, figsize=(8, 6))
 
     for id, ax in enumerate(axs.flat):
         data = extract_measure(1, id+1)

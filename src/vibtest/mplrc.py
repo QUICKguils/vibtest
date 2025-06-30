@@ -36,7 +36,9 @@ UCOLOR = {
 
 def load_rcparams(style="report") -> None:
     # When saved as svg, consider fonts as fonts, not as paths.
-    # This allow the text to be modified with e.g. Inkscape.
+    # Unless the font is not embeddable, it's better to treat fonts as fonts.
+    # This gives better displays and allows to select text in PDFs.
+    # It also allows the text to be modified with e.g. Inkscape.
     mpl.rcParams["svg.fonttype"] = "none"
 
     # Choose compiler for pgf backend, when figs are saved as pgf.
@@ -45,7 +47,7 @@ def load_rcparams(style="report") -> None:
     # Plot style
     mpl.rcParams["figure.constrained_layout.use"] = True
     mpl.rcParams["axes.grid"] = True
-    mpl.rcParams["grid.linewidth"] = 0.8
+    mpl.rcParams["grid.linewidth"] = 0.6
     mpl.rcParams["grid.alpha"] = 0.3
     custom_colorcycler = mpl.cycler(
         color=[
@@ -63,16 +65,14 @@ def load_rcparams(style="report") -> None:
 
     # Here, figure.dpi is set to scale nicely on the screen.
     # If one desire to save the plot in raster format,
-    # higher dpi values should be used (e.g., 250dpi).
+    # higher dpi values should be used (e.g., 300 dpi).
     mpl.rcParams["figure.dpi"] = 150
-
-    # Running figures
-    if style == "running":
-        pass
 
     # Report figures
     if style == "report":
-        mpl.rcParams["figure.figsize"] = (REPORT_TW, REPORT_TW / 1.618033989)
+        mpl.rcParams["figure.figsize"] = (REPORT_TW, REPORT_TW / 1.618033989)  # golden *_*
+
+        mpl.rcParams["lines.linewidth"] = 1
 
         # These params will control how the pgf backend will treat the fonts.
         mpl.rcParams["font.family"] = "sans-serif"
@@ -96,6 +96,8 @@ def load_rcparams(style="report") -> None:
 
     # Presentation figures
     if style == "slide":
+        mpl.rcParams["lines.linewidth"] = 2
+
         # These params will control how the pgf backend will treat the fonts.
         mpl.rcParams["font.family"] = "sans-serif"
         mpl.rcParams["font.size"] = 15

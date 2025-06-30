@@ -5,9 +5,12 @@ as part of the Vibration Testing course (MECA0062-1).
 
 Subpackages
 -----------
+project -- Code developed as part of the project.
 
 Submodules
 ----------
+mplrc -- Set some global matplotlib parameters.
+sdof  -- Single-degree of freedom identification techniques.
 """
 
 import pathlib

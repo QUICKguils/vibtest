@@ -1,15 +1,8 @@
-"""sdof -- Single-degree of freedom (SDOF) identification techniques."""
+"""sdof -- Single-degree-of-freedom identification techniques."""
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import peak_widths
-
-from vibtest import labdata
-
-DATA = labdata.extract_measure(1, 2)
-TIME = np.real(DATA["X1"][:, 0])
-FREQ = np.real(DATA["H1_2"][:, 0])
-
 
 def compute_frf(data):
     """Frequency response function (FRF).
@@ -29,7 +22,7 @@ def compute_cmif(frf):
     """Complex mode indicator function (CMIF).
 
     As the domain space of the FRF is assumed to be 1D (only one input),
-    it happens that the cmif is simply the square of the FRF norm.
+    it happens that the CMIF is simply the square of the FRF norm.
     More details in the report.
 
     NOTE:
@@ -40,7 +33,7 @@ def compute_cmif(frf):
     return np.sum(np.real(np.conj(frf)*frf), axis=0)
 
 
-def plot_cmif(cmif, freq=FREQ):
+def plot_cmif(cmif, freq):
     fig, ax = plt.subplots(figsize=(8, 5))
 
     ax.plot(freq, cmif)
@@ -51,7 +44,7 @@ def plot_cmif(cmif, freq=FREQ):
     fig.show()
 
 
-def peak_picking(frf, freq=FREQ, id_acc=1):
+def peak_picking(frf, freq, id_acc=1):
     frf_ampl = np.abs(frf[id_acc, :])
     fn_idx = np.argmax(frf_ampl)
     halfpeaks_pitch = peak_widths(frf_ampl, [fn_idx], rel_height=1/np.sqrt(2))
@@ -67,11 +60,3 @@ def peak_picking(frf, freq=FREQ, id_acc=1):
 
 def circle_fit(frf):
     pass
-
-
-def main():
-    frf = compute_frf(DATA)
-    cmif = compute_cmif(frf)
-    plot_cmif(cmif)
-
-    return frf, cmif

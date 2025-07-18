@@ -1,4 +1,10 @@
-"""Define the general project statement data."""
+"""Data manipulation utilities.
+
+This module is in charge of handling the data
+provided by the statement, the FEA and the two lab sessions.
+"""
+
+# TODO: plane structure/geometric utils go in this module
 
 from scipy import io
 import matplotlib.pyplot as plt
@@ -10,6 +16,21 @@ LAB_DIR = [
     _PROJECT_PATH / "res" / "lab_2"
 ]
 
+NX_FREQENCIES = [  # identified from the initial NX model
+    17.84,   # mode 1
+    39.31,   # mode 2
+    87.25,   # mode 3
+    89.69,   # mode 4
+    96.61,   # mode 5
+    102.33,  # mode 6
+    128.01,  # mode 7
+    137.59,  # mode 8
+    145.40,  # mode 9
+    154.49,  # mode 10
+    172.06,  # mode 11
+    176.14,  # mode 12
+    176.79,  # mode 13
+]
 
 def extract_measure(id_lab, id_measure):
     file_name = str(LAB_DIR[id_lab-1] / f"DPsv{id_measure:05}.mat")

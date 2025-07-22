@@ -1,3 +1,7 @@
+# Personal draft and backup files
+draft.py
+*.bak
+
 # Heavy recorded lab data
 src/vibtest/project/res/
 

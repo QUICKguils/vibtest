@@ -5,11 +5,10 @@ as part of the Vibration Testing course (MECA0062-1).
 
 Submodules
 ----------
-statement -- Define the general project statement data.
-part_1    -- Finite element analysis of the structure.
-part_2    -- Experimental modal analysis.
-part_3    -- Detailed experimental analysis.
-part_4    -- Comparison between finite element and experimental results.
+data            -- Data manipulation utilities.
+preliminary_ema -- Preliminary experimental modal analysis.
+detailed_ema    -- Detailed experimental modal analysis.
+comparison      -- Comparison between FEA and EMAs.
 """
 
 import importlib
@@ -18,11 +17,10 @@ import pathlib
 _PROJECT_PATH = pathlib.Path(__file__).parent
 
 submodules = [
-    'statement',
-    'part_1',
-    'part_2',
-    'part_3',
-    'part_4',
+    'data',
+    'preliminary_ema',
+    'detailed_ema',
+    'comparison',
 ]
 
 __all__ = submodules + [ '_PROJECT_PATH' ]

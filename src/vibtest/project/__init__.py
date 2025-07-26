@@ -5,7 +5,7 @@ as part of the Vibration Testing course (MECA0062-1).
 
 Submodules
 ----------
-data            -- Data manipulation utilities.
+constant        -- Constant quantities and data manipulation utilities.
 preliminary_ema -- Preliminary experimental modal analysis.
 detailed_ema    -- Detailed experimental modal analysis.
 comparison      -- Comparison between FEA and EMAs.
@@ -17,7 +17,7 @@ import pathlib
 _PROJECT_PATH = pathlib.Path(__file__).parent
 
 submodules = [
-    'data',
+    'constant',
     'preliminary_ema',
     'detailed_ema',
     'comparison',

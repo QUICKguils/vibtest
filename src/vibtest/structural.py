@@ -30,10 +30,14 @@ class Structure:
         self.vertex_counter = 0
         self.dof_counter = 0
 
+        self.accelerometer_list: List[Point] = []
         self.dof_list: List[Dof] = []
         self.dof_links: List[Tuple[Dof, Dof]] = []
         self.vertex_list: List[Point] = []
         self.vertex_links: List[Tuple[Point, Point]] = []
+
+    def add_accelerometer(self, pos: Point):
+        self.accelerometer_list.append(pos)
 
     def add_dof(self, pos: Point, dir: Direction):
         self.dof_counter += 1
@@ -54,6 +58,8 @@ class Structure:
 
         fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
 
+        for accelerometer in self.accelerometer_list:
+            ax.scatter(*accelerometer, color='C0', s=25)
         for edge in self.vertex_links:
             ax.plot([edge[0].x, edge[-1].x], [edge[0].y, edge[-1].y], [edge[0].z, edge[-1].z], color='C7')
         for dof in self.dof_list:
@@ -62,7 +68,7 @@ class Structure:
             ax.plot([edge[0].pos.x, edge[-1].pos.x], [edge[0].pos.y, edge[-1].pos.y], [edge[0].pos.z, edge[-1].pos.z], color='C1')
 
         ax.axis('off')
-        ax.set_aspect('equal', adjustable='box')
+        ax.set_aspect('equal')
         ax.view_init(elev=25, azim=-135, roll=0)
 
         fig.show()

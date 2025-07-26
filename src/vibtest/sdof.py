@@ -1,11 +1,11 @@
 """sdof -- Single-degree-of-freedom identification techniques."""
 
-from typing import NamedTuple, Tuple
+from dataclasses import dataclass
+from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
-from scipy.optimize import least_squares
-from scipy.linalg import svd
+from scipy import optimize
 
 
 def compute_cmif(frf):
@@ -14,22 +14,20 @@ def compute_cmif(frf):
     As the domain space of the FRF is assumed to be 1D (only one input),
     it happens that the CMIF is simply the square of the FRF norm.
     More details in the report.
-
-    NOTE:
-    The following solution is also valid,
-    but slightly slower (import scipy.linalg):
-    >>> return linalg.norm(frf, axis=0)**2
     """
+    # A "naïve" svd implementation, which is a tad slower:
+    # >   S = np.zeros(frf.shape[-1])
+    # >   for k in range(0, frf.shape[-1]):
+    # >       _, sval, _ = linalg.svd(frf[:, :, k])
+    # >       S[k] = sval.item()
+    # >   return S * S
+    # Slighly slower too, but equivalent:
+    # >   return linalg.norm(frf, axis=0)**2
     return np.sum(np.real(np.conj(frf) * frf), axis=0).reshape(-1)
-    # S = np.zeros((frf.shape[2], 1))
-    # print(S.shape)
-    # for id_w, h in enumerate(frf):
-    #     _, S_array, _ = svd(h)
-    #     S[id_w] = S_array[0]
-    # return S * S
 
 
-class PeakPicking(NamedTuple):
+@dataclass(frozen=True)
+class PeakPicking:
     """Computed quantities from the peak-picking method."""
 
     frf_ampl: npt.NDArray
@@ -77,7 +75,8 @@ def peak_picking_method(freq, frf_sdof):
     )
 
 
-class CircleFit(NamedTuple):
+@dataclass(frozen=True)
+class CircleFit:
     """Computed quantities from the circle fit method."""
 
     mobility: Tuple[npt.NDArray]
@@ -111,7 +110,7 @@ def circle_fit(x: npt.NDArray, y: npt.NDArray):
         return radii - mean
 
     centroid = x.mean(), y.mean()  # centroid as inital guess
-    sol = least_squares(func, centroid, args=(x, y))
+    sol = optimize.least_squares(func, centroid, args=(x, y))
     xc, yc = sol.x
 
     radius = np.mean(np.sqrt((x - xc) ** 2 + (y - yc) ** 2))

@@ -119,9 +119,9 @@ def extract_frf(data):
     of one input (hammer) and three outputs (accelerometers).
     The FRF matrix is then of size 3x1xf_sample.
     """
-    h_12 = data["H1_2"][:, -1].reshape(1, 1, -1)
-    h_13 = data["H1_3"][:, -1].reshape(1, 1, -1)
-    h_14 = data["H1_4"][:, -1].reshape(1, 1, -1)
+    h_12 = data['H1_2'][:, -1].reshape(1, 1, -1)
+    h_13 = data['H1_3'][:, -1].reshape(1, 1, -1)
+    h_14 = data['H1_4'][:, -1].reshape(1, 1, -1)
 
     return np.vstack((h_12, h_13, h_14))
 
@@ -133,9 +133,9 @@ def extract_coherence(data):
     of one input (hammer) and three outputs (accelerometers).
     The returned coherence is then of size 3x1xf_sample.
     """
-    c_12 = data["C1_2"][:, -1].reshape(1, 1, -1)
-    c_13 = data["C1_3"][:, -1].reshape(1, 1, -1)
-    c_14 = data["C1_4"][:, -1].reshape(1, 1, -1)
+    c_12 = data['C1_2'][:, -1].reshape(1, 1, -1)
+    c_13 = data['C1_3'][:, -1].reshape(1, 1, -1)
+    c_14 = data['C1_4'][:, -1].reshape(1, 1, -1)
 
     return np.vstack((c_12, c_13, c_14))
 
@@ -179,7 +179,7 @@ def plot_frf_coherence(freq, frf, coh) -> None:
     ax_frf.set_ylabel("FRF (g/N)")
     ax_coh.set_xlabel("Frequency (Hz)")
     ax_coh.set_ylabel("Coherence")
-    ax_frf.set_yscale("log")
+    ax_frf.set_yscale('log')
 
     fig.show()
 
@@ -190,11 +190,11 @@ def plot_cmif_peaks(freq, cmif, peaks) -> None:
     fig, ax = plt.subplots()
 
     ax.plot(freq, cmif)
-    ax.scatter(peaks[:, 0], peaks[:, 1], marker="x", zorder=2.5, color="C1")
+    ax.scatter(peaks[:, 0], peaks[:, 1], marker='x', zorder=2.5, color='C1')
     ax.set_xlabel("Frequency (Hz)")
     ax.set_ylabel(r"CMIF")
     # ax.set_ylabel(r"CMIF ($g^2/N^2$)")  # TODO: make sure of units
-    ax.set_yscale("log")
+    ax.set_yscale('log')
 
     fig.show()
 
@@ -205,9 +205,9 @@ def plot_peak_picking(freq, pp: sdof.PeakPicking) -> None:
     from vibtest.mplrc import REPORT_TW
 
     fig, ax = plt.subplots(figsize=(0.5 * REPORT_TW, 0.5 * REPORT_TW))
-    ax.plot(freq, pp.frf_ampl, color="C0")
-    ax.hlines(pp.half_power, pp.f_low, pp.f_high, color="C1")
-    ax.scatter(pp.f_peak, pp.ampl_peak, marker="+", zorder=2.5, color="C3")
+    ax.plot(freq, pp.frf_ampl, color='C0')
+    ax.hlines(pp.half_power, pp.f_low, pp.f_high, color='C1')
+    ax.scatter(pp.f_peak, pp.ampl_peak, marker='+', zorder=2.5, color='C3')
     ax.set_xlabel("Frequency (Hz)")
     ax.set_ylabel("FRF amplitude (g/N)")
 
@@ -220,19 +220,19 @@ def plot_circle_fit(freq, cf: sdof.CircleFit) -> None:
     from vibtest.mplrc import REPORT_TW
 
     fig, ax = plt.subplots(figsize=(0.5 * REPORT_TW, 0.5 * REPORT_TW))
-    ax.scatter(*cf.mobility, marker="x", s=15, linewidths=1)
-    ax.scatter(*cf.center, marker="+", color="C1", s=30, linewidths=1.5)
+    ax.scatter(*cf.mobility, marker='x', s=15, linewidths=1)
+    ax.scatter(*cf.center, marker='+', color='C1', s=30, linewidths=1.5)
 
-    fitted_circle = plt.Circle(cf.center, cf.radius, fill=False, color="C7", linestyle="dashed")
+    fitted_circle = plt.Circle(cf.center, cf.radius, fill=False, color='C7', linestyle='dashed')
     ax.add_patch(fitted_circle)
 
     ax.text(
-        -0.172, -0.064, r"$\omega_p$", horizontalalignment="right", verticalalignment="top"
+        -0.172, -0.064, r"$\omega_p$", horizontalalignment='right', verticalalignment='top'
     )
 
     ax.set_xlabel("Re(I)/(g/(s*N))")
     ax.set_ylabel("Im(I)/(g/(s*N))")
-    ax.set_aspect("equal")
+    ax.set_aspect('equal')
 
     fig.show()
 
@@ -244,7 +244,7 @@ def plot_circle_fit_dampings(cf: sdof.CircleFit) -> None:
     from vibtest.mplrc import REPORT_TW
 
     fig, ax = plt.subplots(
-        subplot_kw={"projection": "3d"}, figsize=(0.5 * REPORT_TW, 0.5 * REPORT_TW)
+        subplot_kw={'projection': '3d'}, figsize=(0.5 * REPORT_TW, 0.5 * REPORT_TW)
     )
     ax.plot_surface(*cf.damping_grid, cmap=cm.viridis)
     ax.set_xlabel("Frequency (Hz)")

@@ -39,7 +39,7 @@ def main(*, out_enabled=True, dump=False) -> Solution:
     # Flip n_i and n_o to speed up the computations
     H = H.swapaxes(0, 1)
 
-    sol_stabilization = mdof.stabilization_parallel(FSAMPLE, H, DT, 80, debug=True)
+    sol_stabilization = mdof.stabilization(FSAMPLE, H, DT, 100)
 
     sol = Solution(stabilization=sol_stabilization)
 
@@ -98,14 +98,14 @@ def plot_stabilization_diagram(sol: Solution):
         poles = [pole for pole in s.poles if pole.freq <= FMAX]
         freqs = [p.freq for p in poles]
         statuses = [p.status for p in poles]
-        color_status = {
-            mdof.PoleStatus.o: "C6",
-            mdof.PoleStatus.f: "C5",
-            mdof.PoleStatus.d: "C5",
-            mdof.PoleStatus.s: "C4",
+        status_plot_specs = {
+            mdof.PoleStatus.o: {'color': "C2", 'alpha': 0.4},
+            mdof.PoleStatus.f: {'color': "C1", 'alpha': 0.5},
+            mdof.PoleStatus.d: {'color': "C1", 'alpha': 0.5},
+            mdof.PoleStatus.s: {'color': "C0", 'alpha': 1},
         }
         for freq, status in zip(freqs, statuses):
-            ax.text(freq, s.order, status.name, color=color_status[status], ha="center", va="center")
+            ax.text(freq, s.order, status.name, ha="center", va="center", **status_plot_specs[status])
 
     fig.show()
 

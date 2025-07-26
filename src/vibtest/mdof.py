@@ -162,21 +162,6 @@ def stabilization(
     # Instantiate the list of polymax solution with order 2 solution
     list_sol = [polymax(freqs, frf, dt, 2, debug)]
 
-    for q in range(4, n_q + 2, 2):
-        sol = polymax(freqs, frf, dt, q, debug)
-        determine_statuses(sol, list_sol[-1])
-        list_sol.append(sol)
-
-    return list_sol
-
-def stabilization_parallel(
-    freqs: npt.NDArray, frf: npt.NDArray, dt: float, n_q: int, *, debug=False
-) -> List[PolyMAX]:
-    """Build a stabilization diagram."""
-
-    # Instantiate the list of polymax solution with order 2 solution
-    list_sol = [polymax(freqs, frf, dt, 2, debug)]
-
     # Pool of processes, to run polymax for different orders in parallel
     with Pool() as pool:
         args = [(freqs, frf, dt, q, debug) for q in range(4, n_q + 2, 2)]

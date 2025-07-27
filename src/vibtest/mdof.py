@@ -46,8 +46,7 @@ def polymax(freqs: npt.NDArray, frf: npt.NDArray, dt: float, q: int, debug=False
     frf : (n_o x n_i x n_f) numpy array of complex
         Recorded frequency response functions.
     dt : float
-        Time resolution of the recoded data.
-        That is, the inverse of the sampling frequency.
+        Time resolution of the recoded data. That is, the inverse of the sampling frequency.
     q : int
         Polynomial order utilized.
 
@@ -60,11 +59,11 @@ def polymax(freqs: npt.NDArray, frf: npt.NDArray, dt: float, q: int, debug=False
     # Problem dimensions
     n_o, n_i, n_f = frf.shape
 
-    ## Least square solution of the reduced normal equations: M * x = b
+    ## Build the reduced normal equations: M * x = b
 
     # No scalar weighting of the outputs are considered here.
     # This means that X_r matrices are constants across outputs.
-    X_w = (2 * np.pi * freqs).reshape(-1, 1)
+    X_w = (2 * np.pi * freqs).reshape(-1, 1)  # [rad/s]
     X_q = np.arange(q + 1).reshape(1, -1)
     X = np.exp(1j * X_w * X_q * dt)
 
@@ -89,14 +88,13 @@ def polymax(freqs: npt.NDArray, frf: npt.NDArray, dt: float, q: int, debug=False
     M = M_full[: (n_i * q), : (n_i * q)]
     b = -M_full[: (n_i * q), (n_i * q) :]
 
-    # Least square solution
+    ## Least square solution and resulting poles
+
     x = np.linalg.lstsq(M, b)[0]
 
-    ## Determine the resulting poles
-
+    # "Companion" matrix
     upper_left = np.zeros((n_i * (q - 1), n_i))
     upper_right = np.identity(n_i * (q - 1))
-
     C = np.block([[upper_left, upper_right], [-x.T]])
 
     eigvals = np.linalg.eigvals(C)
@@ -104,9 +102,10 @@ def polymax(freqs: npt.NDArray, frf: npt.NDArray, dt: float, q: int, debug=False
     poles = np.log(eigvals) / dt
 
     dampings = -np.real(poles) / np.abs(poles)
-    freqs = np.abs(poles) / (2 * np.pi)  # Hz
+    freqs = np.abs(poles) / (2 * np.pi)  # [Hz]
 
-    ## Debug prints
+    ## Debug informations
+
     if debug:
         print(f"{M_full.shape=}")
         print(f"{M.shape=}")
@@ -160,20 +159,84 @@ def stabilization(
     """Build a stabilization diagram."""
 
     # Instantiate the list of polymax solution with order 2 solution
-    list_sol = [polymax(freqs, frf, dt, 2, debug)]
+    sol_list = [polymax(freqs, frf, dt, 2, debug)]
 
     # Pool of processes, to run polymax for different orders in parallel
     with Pool() as pool:
         args = [(freqs, frf, dt, q, debug) for q in range(4, n_q + 2, 2)]
-        results = pool.starmap(polymax, args)
+        solutions = pool.starmap(polymax, args)
 
     # Fill the list of polymax solutions
-    for sol in results:
-        determine_statuses(sol, list_sol[-1])
-        list_sol.append(sol)
+    for sol in solutions:
+        determine_statuses(sol, sol_list[-1])
+        sol_list.append(sol)
 
-    return list_sol
+    return sol_list
 
 
-def lsfd(poles):
-    pass
+@dataclass(frozen=True)
+class LocalEstimates:
+    residues: npt.NDArray
+    complex_modes: npt.NDArray
+    real_modes: npt.NDArray
+
+
+def lsfd_residues(
+    freqs: npt.NDArray, frf: npt.NDArray, poles: List[Pole], *, debug=False
+) -> npt.NDArray:
+    """Determine complex residues via least square frequency domain (LSFD) method.
+
+    This solve the over-determinated systems `A*x=b` in a least-square sense.
+    """
+
+    # Problem dimensions
+    n_o, n_i, n_f = frf.shape
+    n_m = len(poles)
+
+    ws = 2*np.pi * freqs
+
+    ## Build the constant A matrix of the over-determinated (r, s) systems to solve
+
+    def P(k, w):
+        return 1 / (1j * w - poles[k].value) + 1 / (1j * w - np.conj(poles[k].value))
+
+    def Q(k, w):
+        return 1 / (1j * w - poles[k].value) - 1 / (1j * w - np.conj(poles[k].value))
+
+    A_P = np.array([[P(k, w) for k in range(n_m)] for w in ws])
+    A_Q = np.array([[1j * Q(k, w) for k in range(n_m)] for w in ws])
+    A_M = np.array([-1 / (w**2) for w in ws]).reshape(-1, 1)
+    A_K = np.ones((n_f, 1))
+    A = np.hstack((A_P, A_Q, A_M, A_K))
+
+    if debug:
+        print(f"{A_P.shape=}")
+        print(f"{A_Q.shape=}")
+        print(f"{A_M.shape=}")
+        print(f"{A_K.shape=}")
+        print(f"{A.shape=}")
+
+    ## Solve (r, s) systems in a least-squares sense
+
+    # Instantiate matrix holding the complex residues
+    residues = np.empty((n_o, n_i, n_m), dtype=complex)
+
+    for r, s in np.ndindex(residues.shape[:-1]):
+        b = frf[r, s, :].reshape(-1, 1)
+        x = np.linalg.lstsq(A, b)[0].reshape(-1)
+        residues[r, s, :] = x[:n_m] + 1j * x[n_m : (2 * n_m)]
+
+    return residues
+
+
+def extract_complex_modes(residues: npt.NDArray):
+    n_o, n_i, n_m = residues.shape
+    modes = np.empty((n_m, n_o), dtype=complex)
+    for k in range(n_m):
+        modes[k, 0] = np.sqrt(residues[0, 0, k])
+        modes[k, 1:] = residues[1:, 0, k] / modes[k, 0]
+    return modes
+
+
+def extract_real_modes(complex_modes: npt.NDArray) -> npt.NDArray:
+    return np.real(complex_modes) + np.abs(np.imag(complex_modes))

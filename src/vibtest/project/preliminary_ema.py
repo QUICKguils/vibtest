@@ -14,13 +14,13 @@ import numpy as np
 import numpy.typing as npt
 
 from vibtest import sdof
-from vibtest.project import constant as c
+from vibtest.project import constant
 from vibtest.structural import Point, Structure
 
 # Define the setup parameters used in the first lab session.
 # Only data from the first setup will be used.
 # This setup is described more exhaustively in the report.
-DATA = c.extract_measure(1, 1)
+DATA = constant.extract_measure(1, 1)
 FSAMPLE = np.real(DATA['H1_2'][:, 0])
 FMAX = FSAMPLE[-1]
 DW = FSAMPLE[1] - FSAMPLE[0]
@@ -34,14 +34,15 @@ ACCELEROMETER_POS = [
 ]
 
 # Natural frequencies peaks ranges,
-# determined a posteriori from the reading of the CMIF
+# determined a posteriori from the reading of the CMIF.
 #
+# NOTE:
 # There's no robust way to automatically select the resonance peaks.
 # Despite the great flexibility offered by scipy.signal.find_peaks,
 # there's no satisfactory filter combination that selects perfectly
 # all the desired peaks, and they should better be picked manually,
 # using both common sense and knowledge from the NX simulations.
-EIGFREQ_BOUND = [
+SPOTTED_PEAKS_RANGE = [
     (18, 20),  # freq 1
     (39, 39.6),  # freq 2
     (39, 41),  # freq 3
@@ -67,15 +68,21 @@ class Solution:
     circle_fit: sdof.CircleFit
 
 
-def main(*, out_enabled=True) -> Solution:
-    """Execute the preliminary EMA."""
+def main(*, spit_out=True) -> Solution:
+    """Execute the preliminary EMA.
+
+    Parameters
+    ----------
+    spit_out: default True
+        Spits out the computed results. Print summary in stdout, and display the graphs.
+    """
 
     ## Extract relevant data and identify frequencies
 
     frf = extract_frf(DATA)
     coh = extract_coherence(DATA)
     cmif = sdof.compute_cmif(frf)
-    peaks = find_peaks(FSAMPLE, cmif, EIGFREQ_BOUND)
+    peaks = find_peaks(FSAMPLE, cmif, SPOTTED_PEAKS_RANGE)
 
     ## SDOF analysis
     #
@@ -84,7 +91,7 @@ def main(*, out_enabled=True) -> Solution:
     # This corresponds to frf[0, 0, :].
 
     # Identify and isolate the first frequency peak from the CMIF plot
-    id_low, id_high = np.searchsorted(FSAMPLE, EIGFREQ_BOUND[0])
+    id_low, id_high = np.searchsorted(FSAMPLE, SPOTTED_PEAKS_RANGE[0])
     frf_sdof = frf[0, 0, id_low : id_high + 1]
     freq_sdof = FSAMPLE[id_low : id_high + 1]
 
@@ -100,7 +107,7 @@ def main(*, out_enabled=True) -> Solution:
         frf=frf, cmif=cmif, eigfreq=peaks[:, 0], peak_picking=peak_picking, circle_fit=circle_fit
     )
 
-    if out_enabled:
+    if spit_out:
         print_solution(sol)
         plot_testing_setup()
         plot_frf_coherence(FSAMPLE, frf, coh)
@@ -158,7 +165,7 @@ def find_peaks(x, signal, bounds_list: np.array) -> np.array:
 
 def plot_testing_setup() -> None:
     plane = Structure()
-    c.init_geometry(plane)
+    constant.init_geometry(plane)
     for accelerometer in ACCELEROMETER_POS:
         plane.add_accelerometer(accelerometer)
     plane.plot_geometry()
@@ -266,13 +273,13 @@ def print_solution(sol: Solution) -> None:
     print(f"   Damping ratio: {100 * sol.circle_fit.damping:.2} %")
 
 
-def _inspect_coherences():
+def _inspect_coherences() -> None:
     import matplotlib.pyplot as plt
 
     fig, axs = plt.subplots(4, 2, figsize=(8, 6))
 
     for id, ax in enumerate(axs.flat):
-        data = c.extract_measure(1, id + 1)
+        data = constant.extract_measure(1, id + 1)
 
         c_12 = data["C1_2"]
         c_13 = data["C1_3"]

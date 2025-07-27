@@ -4,10 +4,9 @@ from vibtest import project
 
 
 def main():
-    project.part_1.main()
-    project.part_2.main()
-    project.part_3.main()
-    project.part_4.main()
+    project.preliminary_ema.main()
+    project.detailed_ema.main()
+    project.comparison.main()
 
 
 if __name__ == '__main__':

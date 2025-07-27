@@ -84,6 +84,7 @@ def main(*, spit_out=True, load_dump=True, save_dump=False) -> Solution:
     if spit_out:
         print_solution(sol)
         plot_stabilization_diagram(sol)
+        plot_argand_diagram(sol)
 
     if save_dump:
         with open(_DUMP_FILE, "wb") as handle:
@@ -184,19 +185,42 @@ def plot_stabilization_diagram(sol: Solution):
     fig.show()
 
 
-def plot_argand_diagram(complex_modes) -> None:
+def plot_argand_bak(complex_modes) -> None:
     import matplotlib.pyplot as plt
 
     from vibtest.mplrc import REPORT_TW
 
-    fig, axs = plt.subplots(5, 3, figsize=(REPORT_TW, 2*REPORT_TW), subplot_kw={'projection': 'polar'})
+    fig, axs = plt.subplots(
+        5, 3, figsize=(REPORT_TW, 2 * REPORT_TW), subplot_kw={"projection": "polar"}
+    )
     for ix, mode in enumerate(complex_modes):
         axs.flat[ix].scatter(np.angle(mode), np.abs(mode), alpha=0.3, s=10)
 
     fig.show()
 
 
-def plot_modes_shape(sol:Solution):
+def plot_argand_diagram(sol: Solution, complex_modes) -> None:
+    import matplotlib.pyplot as plt
+
+    from vibtest.mplrc import REPORT_TW
+
+    fig, axs = plt.subplots(
+        5, 3, figsize=(REPORT_TW, 1.5 * REPORT_TW), subplot_kw={"projection": "polar"}, dpi=100
+    )
+    for ix, mode in enumerate(complex_modes[:-1]):
+        axs.flat[ix].set_title(f"Mode {ix + 1} --- {sol.poles[ix].freq:.2f} Hz")
+        axs.flat[ix].scatter(np.angle(mode), np.abs(mode), alpha=0.3, s=10)
+
+    # Plot the last one in the center of the last row. Hide empty axes.
+    axs.flat[-2].set_title(f"Mode {len(complex_modes)} --- {sol.poles[-1].freq:.2f} Hz")
+    axs.flat[-2].scatter(np.angle(mode), np.abs(mode), alpha=0.3, s=10)
+    axs.flat[-3].axis("off")
+    axs.flat[-1].axis("off")
+
+    fig.show()
+
+
+def plot_modes_shape(sol: Solution):
     pass
 
 

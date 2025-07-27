@@ -175,7 +175,7 @@ def stabilization(
 
 
 @dataclass(frozen=True)
-class LocalEstimates:
+class LocalEstimate:
     residues: npt.NDArray
     complex_modes: npt.NDArray
     real_modes: npt.NDArray

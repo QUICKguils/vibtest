@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import List
 
 import numpy as np
+import numpy.typing as npt
 
 from vibtest import mdof
 from vibtest.project import _PROJECT_PATH, constant
@@ -27,6 +28,11 @@ DW = FSAMPLE[1] - FSAMPLE[0]
 TSAMPLE = _DATA["X1"][:, 0]
 TMAX = TSAMPLE[-1]
 DT = TSAMPLE[1] - TSAMPLE[0]
+ACCELEROMETER_POS = [
+    np.array([830, -730, 0]),  # right wing tip
+    np.array([80, -230, 75]),  # right horizontal tail tip
+    np.array([802, -250, -55]),  # right engine
+]
 
 # Position of the selected stable poles,
 # determined a posteriori from the reading of the stabilization diagram.
@@ -60,11 +66,13 @@ SPOTTED_POLES_POS = [
 class Solution:
     stabilization: List[mdof.PolyMAX]
     poles: List[mdof.Pole]
-    # mode: List[mdof.LSFD]
+    residues: npt.NDArray
+    modes_complex: npt.NDArray
+    modes_real: npt.NDArray
 
 
 def main(*, spit_out=True, load_dump=True, save_dump=False) -> Solution:
-    """Execute the detailed EMA.
+    """Execute the detailed experimental modal analysis.
 
     Parameters
     ----------
@@ -83,8 +91,10 @@ def main(*, spit_out=True, load_dump=True, save_dump=False) -> Solution:
 
     if spit_out:
         print_solution(sol)
+        plot_testing_setup()
         plot_stabilization_diagram(sol)
         plot_argand_diagram(sol)
+        inspect_all_modes_shape(sol)
 
     if save_dump:
         with open(_DUMP_FILE, "wb") as handle:
@@ -94,26 +104,42 @@ def main(*, spit_out=True, load_dump=True, save_dump=False) -> Solution:
 
 
 def _main_compute() -> Solution:
-    H = build_frf_matrix()
-    H_swapped = H.swapaxes(0, 1)  # flip n_i and n_o to speed up computations
+    """Perform the actual computations of the detailed EMA."""
+    H = build_frf_matrix().swapaxes(0, 1)  # flip n_i and n_o to speed up computations
 
-    sol_stabilization = mdof.stabilization(FSAMPLE, H_swapped, DT, 100)
+    sol_stabilization = mdof.stabilization(FSAMPLE, H, DT, 100)
 
     extracted_poles = extract_spotted_poles(sol_stabilization)
 
-    residues = mdof.lsfd_residues(FSAMPLE[1:], H_swapped[:, :, 1:], extracted_poles, debug=True)
+    residues = mdof.lsfd_residues(FSAMPLE[1:], H[:, :, 1:], extracted_poles, debug=True)
 
-    return Solution(stabilization=sol_stabilization, poles=extracted_poles)
+    modes_complex = mdof.extract_complex_modes(residues)
+
+    modes_real = mdof.extract_real_modes(modes_complex)
+
+    return Solution(
+        stabilization=sol_stabilization,
+        poles=extracted_poles,
+        residues=residues,
+        modes_complex=modes_complex,
+        modes_real=modes_real,
+    )
 
 
 def _main_load_dump() -> Solution:
-    with open(_DUMP_FILE, "rb") as handle:
-        return pickle.load(handle)
+    """Try to load the solution of the detailed EMA from a pickle file."""
+    try:
+        handle = open(_DUMP_FILE, "rb")
+    except FileNotFoundError:
+        print("No saved solution bro. Computing it from scratch...")
+        return _main_compute()
+    else:
+        with handle:
+            return pickle.load(handle)
 
 
 def build_frf_matrix():
     """Build the matrix of recorded frequency response functions."""
-
     h_1 = np.fromiter(
         (constant.extract_measure(2, i + 1)["H1_2"][:, -1] for i in range(constant.N_DOF)),
         dtype=np.dtype((complex, len(FSAMPLE))),
@@ -145,6 +171,13 @@ def extract_spotted_poles(sol_stab: List[mdof.PolyMAX]) -> List[mdof.Pole]:
         extracted_poles.append(selected_pole)
 
     return extracted_poles
+
+
+def plot_testing_setup() -> None:
+    plane = constant.init_plane()
+    for accelerometer in ACCELEROMETER_POS:
+        plane.add_accelerometer(accelerometer)
+    plane.plot_geometry()
 
 
 def plot_stabilization_diagram(sol: Solution):
@@ -185,21 +218,7 @@ def plot_stabilization_diagram(sol: Solution):
     fig.show()
 
 
-def plot_argand_bak(complex_modes) -> None:
-    import matplotlib.pyplot as plt
-
-    from vibtest.mplrc import REPORT_TW
-
-    fig, axs = plt.subplots(
-        5, 3, figsize=(REPORT_TW, 2 * REPORT_TW), subplot_kw={"projection": "polar"}
-    )
-    for ix, mode in enumerate(complex_modes):
-        axs.flat[ix].scatter(np.angle(mode), np.abs(mode), alpha=0.3, s=10)
-
-    fig.show()
-
-
-def plot_argand_diagram(sol: Solution, complex_modes) -> None:
+def plot_argand_diagram(sol: Solution) -> None:
     import matplotlib.pyplot as plt
 
     from vibtest.mplrc import REPORT_TW
@@ -207,25 +226,62 @@ def plot_argand_diagram(sol: Solution, complex_modes) -> None:
     fig, axs = plt.subplots(
         5, 3, figsize=(REPORT_TW, 1.5 * REPORT_TW), subplot_kw={"projection": "polar"}, dpi=100
     )
-    for ix, mode in enumerate(complex_modes[:-1]):
+    for ix, mode in enumerate(sol.modes_complex[:-1]):
         axs.flat[ix].set_title(f"Mode {ix + 1} --- {sol.poles[ix].freq:.2f} Hz")
         axs.flat[ix].scatter(np.angle(mode), np.abs(mode), alpha=0.3, s=10)
 
     # Plot the last one in the center of the last row. Hide empty axes.
-    axs.flat[-2].set_title(f"Mode {len(complex_modes)} --- {sol.poles[-1].freq:.2f} Hz")
-    axs.flat[-2].scatter(np.angle(mode), np.abs(mode), alpha=0.3, s=10)
+    axs.flat[-2].set_title(f"Mode {len(sol.modes_complex)} --- {sol.poles[-1].freq:.2f} Hz")
+    axs.flat[-2].scatter(
+        np.angle(sol.modes_complex[-1]), np.abs(sol.modes_complex[-1]), alpha=0.3, s=10
+    )
     axs.flat[-3].axis("off")
     axs.flat[-1].axis("off")
 
     fig.show()
 
 
-def plot_modes_shape(sol: Solution):
-    pass
+def plot_mode_shape(mode: npt.NDArray, plot_object=None) -> None:
+    import matplotlib.pyplot as plt
+
+    # Add capability to draw on an already existing plot
+    if plot_object is None:
+        fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    else:
+        fig, ax = plot_object
+
+    # Scale the mode to a desired percentage
+    L = 1200  # Characteristic length (fuselage length)
+    percentage = 15 / 100
+    max_displ = np.max(np.abs(mode))
+    scale_factor = L * percentage / max_displ
+    mode = scale_factor * mode
+
+    plane = constant.init_plane()
+
+    for ix, dof in enumerate(plane.dof_list):
+        displ = mode[ix]
+        dof.pos = dof.pos + displ * dof.dir
+
+    plane.plot_geometry((fig, ax))
+
+
+def inspect_all_modes_shape(sol: Solution) -> None:
+    import matplotlib.pyplot as plt
+
+    from vibtest.mplrc import REPORT_TW
+
+    n_mode = sol.modes_real.shape[0]
+    n_col = 3
+    n_row = int(np.ceil(n_mode/n_col))
+    fig, axs = plt.subplots(n_row, n_col, figsize=(2 * REPORT_TW, 2 * REPORT_TW), subplot_kw={"projection": "3d"}, dpi=100)
+
+    for k, mode in enumerate(sol.modes_real[:n_mode]):
+        plot_mode_shape(mode, (fig, axs.flat[k]))
 
 
 def print_solution(sol: Solution):
     print("=== Solutions for the detailed EMA ===")
-    print("1. Selected poles")
+    print("Selected poles")
     for ix, p in enumerate(sol.poles):
-        print(f"   Mode {ix:>2} : freq = {p.freq:>7.3f} Hz, damping = {100 * p.damping:>5.3f} %")
+        print(f"Mode {ix+1:>2} : freq = {p.freq:>7.3f} Hz, damping = {100 * p.damping:>5.3f} %")

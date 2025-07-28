@@ -1,4 +1,4 @@
-"""mdof -- Multi-degree-of-freedom identification techniques."""
+"""Multi-degree-of-freedom identification techniques."""
 
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -174,13 +174,6 @@ def stabilization(
     return sol_list
 
 
-@dataclass(frozen=True)
-class LocalEstimate:
-    residues: npt.NDArray
-    complex_modes: npt.NDArray
-    real_modes: npt.NDArray
-
-
 def lsfd_residues(
     freqs: npt.NDArray, frf: npt.NDArray, poles: List[Pole], *, debug=False
 ) -> npt.NDArray:
@@ -238,5 +231,5 @@ def extract_complex_modes(residues: npt.NDArray):
     return modes
 
 
-def extract_real_modes(complex_modes: npt.NDArray) -> npt.NDArray:
-    return np.real(complex_modes) + np.abs(np.imag(complex_modes))
+def extract_real_modes(modes_complex: npt.NDArray) -> npt.NDArray:
+    return np.abs(modes_complex) * np.sign(np.imag(modes_complex))

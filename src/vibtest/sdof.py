@@ -1,4 +1,4 @@
-"""sdof -- Single-degree-of-freedom identification techniques."""
+"""Single-degree-of-freedom identification techniques."""
 
 from dataclasses import dataclass
 from typing import Tuple

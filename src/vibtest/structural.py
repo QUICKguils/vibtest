@@ -62,7 +62,8 @@ class Structure:
                 [edge[0][0], edge[-1][0]],
                 [edge[0][1], edge[-1][1]],
                 [edge[0][2], edge[-1][2]],
-                color="C7", alpha=0.3,
+                color="C7",
+                # alpha=0.3,
             )
         for dof in self.dof_list:
             ax.scatter(*dof.pos, color="C1", s=5)

@@ -9,8 +9,14 @@ project -- Code developed as part of the project.
 
 Submodules
 ----------
-mplrc -- Set some global matplotlib parameters.
-sdof  -- Single-degree of freedom identification techniques.
+mplrc      -- Set some global matplotlib parameters.
+sdof       -- Single-degree of freedom identification techniques.
+mdof       -- Multi-degree-of-freedom identification techniques.
+structural -- Build and manipulate mechanical structures.
+
+Executables
+-----------
+MECA0062_Ernotte.py -- Trigger all the project code.
 """
 
 import pathlib

@@ -28,9 +28,9 @@ TSAMPLE = DATA['X1'][:, 0]
 TMAX = TSAMPLE[-1]
 DT = TSAMPLE[1] - TSAMPLE[0]
 ACCELEROMETER_POS = [
-    Point(830, -730, 0),  # right wing tip
-    Point(80, -230, 75),  # right horizontal tail tip
-    Point(20, 0, 320),  # vertical tail tip
+    np.array([830, -730, 0]),  # right wing tip
+    np.array([80, -230, 75]),  # right horizontal tail tip
+    np.array([20, 0, 320]),  # vertical tail tip
 ]
 
 # Natural frequencies peaks ranges,

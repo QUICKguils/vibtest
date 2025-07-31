@@ -16,7 +16,7 @@ structural -- Build and manipulate mechanical structures.
 
 Executables
 -----------
-MECA0062_Ernotte.py -- Trigger all the project code.
+MECA0062_Ernotte -- Trigger all the project code.
 """
 
 import pathlib

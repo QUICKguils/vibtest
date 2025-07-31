@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass
 
-import vibtest.project.preliminary_ema as pema
-import vibtest.project.detailed_ema as dema
 import vibtest.project.comparison as comp
+import vibtest.project.detailed_ema as dema
+import vibtest.project.preliminary_ema as pema
 
 
 @dataclass(frozen=True)

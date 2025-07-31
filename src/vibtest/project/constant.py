@@ -5,22 +5,21 @@ provided by the statement, the FEA and the two lab sessions.
 """
 
 import numpy as np
+import numpy.typing as npt
 from scipy import io
 
 from vibtest.project import _PROJECT_PATH
 from vibtest.structural import Structure
 
-LAB_DIR = [
-    _PROJECT_PATH / "res" / "lab_1",
-    _PROJECT_PATH / "res" / "lab_2"
-]
-
+LAB_DIR = [_PROJECT_PATH / "res" / "lab_1", _PROJECT_PATH / "res" / "lab_2"]
+NX_MODES_DIR = _PROJECT_PATH / "res" / "nx_modes"
+NX_MODES = _PROJECT_PATH / "res" / "nx_modes" / "modes_filtered.csv"
 NX_FREQ = [  # identified from the initial NX model
-    17.84,   # mode 1
-    39.31,   # mode 2
-    87.25,   # mode 3
-    89.69,   # mode 4
-    96.61,   # mode 5
+    17.84,  # mode 1
+    39.31,  # mode 2
+    87.25,  # mode 3
+    89.69,  # mode 4
+    96.61,  # mode 5
     102.33,  # mode 6
     128.01,  # mode 7
     137.59,  # mode 8
@@ -33,8 +32,67 @@ NX_FREQ = [  # identified from the initial NX model
 
 
 def extract_measure(id_lab, id_measure):
-    file_name = str(LAB_DIR[id_lab-1] / f"DPsv{id_measure:05}.mat")
+    file_name = str(LAB_DIR[id_lab - 1] / f"DPsv{id_measure:05}.mat")
     return io.loadmat(file_name)
+
+
+def extract_nx_mode(id_mode: int) -> npt.NDArray:
+    """Retrieve the NX modes at locations that match the impact locations."""
+    file_name = str(NX_MODES_DIR / f"mode_{id_mode}.csv")
+    mode_dump = np.loadtxt(file_name, delimiter=",", skiprows=1)  # Raw extract provided by NX
+    pos = np.array((mode_dump[:, 1], -mode_dump[:, 0], mode_dump[:, 2])).T
+    defo = np.array((np.zeros(mode_dump[:, 0].shape), -mode_dump[:, -2], mode_dump[:, -1])).T
+    mode = np.empty(N_DOF)
+    for ix_dof, dof in enumerate(PLANE.dof_list):
+        # Find the NX node that is the nearest from the experimental dof (the impacts locations)
+        # Using a Manhattan-like norm is sufficient here.
+        ix_dump = np.argmin(np.sum(np.abs(pos - dof.pos), axis=1))
+        # Extract the desired dof displacement
+        mode[ix_dof] = defo[ix_dump] @ dof.dir
+
+    return mode
+
+
+def _check_extracted_nx_pos(id_mode: int) -> None:
+    import matplotlib.pyplot as plt
+
+    file_name = str(NX_MODES_DIR / f"mode_{id_mode}.csv")
+    mode_dump = np.loadtxt(file_name, delimiter=",", skiprows=1)
+    pos_dump = np.array((mode_dump[:, 1], -mode_dump[:, 0], mode_dump[:, 2])).T
+    pos = np.empty((N_DOF, pos_dump.shape[-1]))
+    for ix_dof, dof in enumerate(PLANE.dof_list):
+        ix_dump = np.argmin(np.sum(np.abs(pos_dump - dof.pos), axis=1))
+        pos[ix_dof] = pos_dump[ix_dump]
+
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+
+    for edge in PLANE.vertex_links:
+        ax.plot(
+            [edge[0][0], edge[-1][0]],
+            [edge[0][1], edge[-1][1]],
+            [edge[0][2], edge[-1][2]],
+            color="C7",
+        )
+    for p in pos:
+        ax.scatter(*p, color="C1", s=5)
+
+    ax.axis("off")
+    ax.set_aspect("equal")
+    ax.view_init(elev=25, azim=-135, roll=0)
+
+    fig.show()
+
+
+def extract_nx_modes(save_file=True) -> npt.NDArray:
+    n_modes = len(NX_FREQ)
+    nx_modes = np.empty((n_modes, N_DOF))
+    for ix_mode in range(n_modes):
+        nx_modes[ix_mode] = extract_nx_mode(ix_mode + 1)
+
+    if save_file:
+        np.savetxt(str(NX_MODES), nx_modes)
+
+    return nx_modes
 
 
 def init_geometry(plane: Structure):
@@ -43,10 +101,10 @@ def init_geometry(plane: Structure):
     # edge creation relies on the order of the implicitely created dof labels.
 
     # Fuselage
-    plane.add_vertex(pos=np.array([   0,  50,   0]))
-    plane.add_vertex(pos=np.array([   0, -50,   0]))
-    plane.add_vertex(pos=np.array([   0, -50, 150]))
-    plane.add_vertex(pos=np.array([   0,  50, 150]))
+    plane.add_vertex(pos=np.array([0,  50,   0]))
+    plane.add_vertex(pos=np.array([0, -50,   0]))
+    plane.add_vertex(pos=np.array([0, -50, 150]))
+    plane.add_vertex(pos=np.array([0,  50, 150]))
 
     plane.add_vertex(pos=np.array([1200,  50,   0]))
     plane.add_vertex(pos=np.array([1200, -50,   0]))

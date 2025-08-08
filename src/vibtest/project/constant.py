@@ -13,7 +13,8 @@ from vibtest.structural import Structure
 
 LAB_DIR = [_PROJECT_PATH / "res" / "lab_1", _PROJECT_PATH / "res" / "lab_2"]
 NX_MODES_DIR = _PROJECT_PATH / "res" / "nx_modes"
-NX_MODES = _PROJECT_PATH / "res" / "nx_modes" / "modes_filtered.csv"
+NX_MODES_PATH = NX_MODES_DIR / "modes_filtered.csv"
+
 NX_FREQ = [  # identified from the initial NX model
     17.84,  # mode 1
     39.31,  # mode 2
@@ -36,9 +37,9 @@ def extract_measure(id_lab, id_measure):
     return io.loadmat(file_name)
 
 
-def extract_nx_mode(id_mode: int) -> npt.NDArray:
+def extract_nx_mode(mode_dir, id_mode: int) -> npt.NDArray:
     """Retrieve the NX modes at locations that match the impact locations."""
-    file_name = str(NX_MODES_DIR / f"mode_{id_mode}.csv")
+    file_name = str(mode_dir / f"mode_{id_mode}.csv")
     mode_dump = np.loadtxt(file_name, delimiter=",", skiprows=1)  # Raw extract provided by NX
     pos = np.array((mode_dump[:, 1], -mode_dump[:, 0], mode_dump[:, 2])).T
     defo = np.array((np.zeros(mode_dump[:, 0].shape), -mode_dump[:, -2], mode_dump[:, -1])).T
@@ -53,10 +54,10 @@ def extract_nx_mode(id_mode: int) -> npt.NDArray:
     return mode
 
 
-def _check_extracted_nx_pos(id_mode: int) -> None:
+def _check_extracted_nx_pos(mode_dir, id_mode: int) -> None:
     import matplotlib.pyplot as plt
 
-    file_name = str(NX_MODES_DIR / f"mode_{id_mode}.csv")
+    file_name = str(mode_dir / f"mode_{id_mode}.csv")
     mode_dump = np.loadtxt(file_name, delimiter=",", skiprows=1)
     pos_dump = np.array((mode_dump[:, 1], -mode_dump[:, 0], mode_dump[:, 2])).T
     pos = np.empty((N_DOF, pos_dump.shape[-1]))
@@ -83,14 +84,14 @@ def _check_extracted_nx_pos(id_mode: int) -> None:
     fig.show()
 
 
-def extract_nx_modes(save_file=True) -> npt.NDArray:
-    n_modes = len(NX_FREQ)
+def extract_nx_modes(mode_dir, save_file=None) -> npt.NDArray:
+    n_modes = len(NX_FREQ)  # TODO: not robust
     nx_modes = np.empty((n_modes, N_DOF))
     for ix_mode in range(n_modes):
-        nx_modes[ix_mode] = extract_nx_mode(ix_mode + 1)
+        nx_modes[ix_mode] = extract_nx_mode(mode_dir, ix_mode + 1)
 
-    if save_file:
-        np.savetxt(str(NX_MODES), nx_modes)
+    if save_file is not None:
+        np.savetxt(str(save_file), nx_modes)
 
     return nx_modes
 

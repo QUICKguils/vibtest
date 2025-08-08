@@ -20,7 +20,7 @@ python -m venv .venv
 
 # activate the virtual environment
 source .venv/bin/activate  # on Unix/macOS
-.venv\Scripts\activate      # on Windows
+.venv\Scripts\activate     # on Windows
 ```
 
 Still from the top level, install the package (optionally in editable mode, with the `-e` flag).
@@ -43,13 +43,13 @@ import vibtest
 
 # Example 1
 # Run the second part of the project.
-from vibtest.project import part_2
-sol = part_2.main()
+import vibtest.project.detailed_ema as dema
+sol_dema = dema.main()
 
 # Example 2
 # Check the coherences of the first lab session data.
-from vibtest.project import statement
-statement._inspect_coherences_lab_1()
+import vibtest.project.preliminary_ema as pema
+pema._inspect_coherences()
 ```
 
 ## Project layout
@@ -58,6 +58,11 @@ The source code lies in `src/vibtest/`.
 It contains the following packages and modules.
 - Packages:
   - `project/` Code developed as part of the project.
+    - `res/` Data from the lab sessions and the NX simulations.
+    - `constant` Constant quantities and data manipulation utilities.
+    - `preliminary_ema` Preliminary experimental modal analysis.
+    - `detailed_ema` Detailed experimental modal analysis.
+    - `comparison` Comparison between FEA and EMAs.
 - Modules:
   - `mplrc.py` Set some global Matplotlib parameters.
   - `structural.py` Build and manipulate mechanical structures.

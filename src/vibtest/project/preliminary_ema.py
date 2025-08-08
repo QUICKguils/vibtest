@@ -15,7 +15,7 @@ import numpy.typing as npt
 
 from vibtest import sdof
 from vibtest.project import constant
-from vibtest.structural import Point, Structure
+from vibtest.structural import Structure
 
 # Define the setup parameters used in the first lab session.
 # Only data from the first setup will be used.
